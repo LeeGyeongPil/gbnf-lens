@@ -1,0 +1,43 @@
+{
+  "name": "gbnf-lens-vscode",
+  "displayName": "GBNF Lens",
+  "description": "Diagnostics, go-to-definition and sample checking for llama.cpp GBNF grammars.",
+  "version": "0.1.0",
+  "publisher": "LeeGyeongPil",
+  "license": "MIT",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeeGyeongPil/gbnf-lens.git",
+    "directory": "extension"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": ["Linters", "Programming Languages"],
+  "activationEvents": ["onLanguage:gbnf"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "gbnf",
+        "aliases": ["GBNF", "gbnf"],
+        "extensions": [".gbnf"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "gbnf",
+        "scopeName": "source.gbnf",
+        "path": "./syntaxes/gbnf.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "gbnf-lens.checkSample",
+        "title": "GBNF: Check Sample Against Grammar"
+      }
+    ]
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "GBNF",
+  "scopeName": "source.gbnf",
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#rule-head" },
+    { "include": "#string" },
+    { "include": "#class" },
+    { "include": "#token" },
+    { "include": "#repetition" },
+    { "include": "#operator" },
+    { "include": "#reference" }
+  ],
+  "repository": {
+    "comment": {
+      "name": "comment.line.number-sign.gbnf",
+      "match": "#.*$"
+    },
+    "rule-head": {
+      "match": "^\\s*([A-Za-z0-9-]+)\\s*(::=)",
+      "captures": {
+        "1": { "name": "entity.name.function.gbnf" },
+        "2": { "name": "keyword.operator.definition.gbnf" }
+      }
+    },
+    "string": {
+      "name": "string.quoted.double.gbnf",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        { "name": "constant.character.escape.gbnf", "match": "\\\\(x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8}|[tnr\\\\\"\\[\\]-])" },
+        { "name": "invalid.illegal.escape.gbnf", "match": "\\\\." }
+      ]
+    },
+    "class": {
+      "name": "string.regexp.gbnf",
+      "begin": "\\[\\^?",
+      "end": "\\]",
+      "patterns": [
+        { "name": "constant.character.escape.gbnf", "match": "\\\\(x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8}|[tnr\\\\\"\\[\\]-])" },
+        { "name": "invalid.illegal.escape.gbnf", "match": "\\\\." }
+      ]
+    },
+    "token": {
+      "name": "support.constant.token.gbnf",
+      "match": "!?<[^>\\n]*>"
+    },
+    "repetition": {
+      "name": "keyword.operator.quantifier.gbnf",
+      "match": "[*+?]|\\{\\s*\\d+\\s*(,\\s*\\d*\\s*)?\\}"
+    },
+    "operator": {
+      "name": "keyword.operator.gbnf",
+      "match": "[|().]"
+    },
+    "reference": {
+      "name": "variable.other.rule.gbnf",
+      "match": "[A-Za-z0-9-]+"
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "name": "gbnf-lens",
+  "version": "0.1.0",
+  "description": "Lint, explain and sample-check llama.cpp GBNF grammars before you send them to a local LLM server. Library, CLI and VS Code extension.",
+  "license": "MIT",
+  "author": "LeeGyeongPil",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeeGyeongPil/gbnf-lens.git"
+  },
+  "homepage": "https://github.com/LeeGyeongPil/gbnf-lens#readme",
+  "bugs": {
+    "url": "https://github.com/LeeGyeongPil/gbnf-lens/issues"
+  },
+  "keywords": [
+    "gbnf",
+    "grammar",
+    "llama.cpp",
+    "constrained-decoding",
+    "lint",
+    "vscode"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "gbnf-lens": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md",
+    "README.ko.md",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "node scripts/build.mjs",
+    "test": "npm run build && node --test \"test/**/*.test.mjs\"",
+    "demo": "npm run build && node scripts/demo.mjs",
+    "prepare": "node scripts/build.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.6",
+    "@types/vscode": "1.90.0",
+    "esbuild": "0.28.2",
+    "typescript": "7.0.2"
+  }
+}
