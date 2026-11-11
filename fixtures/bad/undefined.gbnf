@@ -1,0 +1,3 @@
+root ::= greeting " " name
+greeting ::= "hi" | "hello"
+unused ::= "x"

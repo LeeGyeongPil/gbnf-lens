@@ -1,0 +1,4 @@
+# Many optional parameters, repeated up to 1500 times.
+# llama.cpp multiplies the rules inside the parentheses by 1500 and refuses the grammar.
+root  ::= ("name=" value (",unit=" value)? (",lang=" value)?){0,1500}
+value ::= [a-z]+

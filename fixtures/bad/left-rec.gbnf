@@ -1,0 +1,3 @@
+root ::= expr
+expr ::= expr "+" num | num
+num ::= [0-9]+

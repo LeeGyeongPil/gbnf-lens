@@ -1,0 +1,89 @@
+{
+  "recorded_with": "llama.cpp commit af6b524, CPU build of tests/test-gbnf-validator.cpp, recorded 2026-11-11. Output is the validator's stdout+stderr without blank lines and color codes (first 6 lines). This is a fixed recording, not a live run: newer llama.cpp versions can behave differently.",
+  "cases": [
+    {
+      "name": "json-valid",
+      "grammar": "grammars/json.gbnf",
+      "sample": "{\"a\": [1, 2.5, \"x\\n\"], \"b\": null}",
+      "output": "Input string is valid according to the grammar."
+    },
+    {
+      "name": "json-trailing-comma",
+      "grammar": "grammars/json.gbnf",
+      "sample": "{\"a\": 1,}",
+      "output": "Input string is invalid according to the grammar.\nError: Unexpected character '}' at position 8\nInput string:\n{\"a\": 1,}"
+    },
+    {
+      "name": "chess-valid",
+      "grammar": "grammars/chess.gbnf",
+      "sample": "1. e4 e5\n2. Nf3 Nc6\n",
+      "output": "Input string is valid according to the grammar."
+    },
+    {
+      "name": "chess-cut-short",
+      "grammar": "grammars/chess.gbnf",
+      "sample": "1. e4 e5\n",
+      "output": "Input string is invalid according to the grammar.\nError: Unexpected end of input at position 9\nInput string:\n1. e4 e5"
+    },
+    {
+      "name": "c-missing-semicolon",
+      "grammar": "grammars/c.gbnf",
+      "sample": "int main(){return 0}",
+      "output": "Input string is invalid according to the grammar.\nError: Unexpected character '}' at position 19\nInput string:\nint main(){return 0}"
+    },
+    {
+      "name": "bad-escape",
+      "grammar": "bad/bad-escape.gbnf",
+      "sample": "a a.",
+      "output": "parse: error parsing grammar: unknown escape at \\q\"\nroot ::= \"a\\q\"\nfailed to parse grammar\nFailed to initialize llama_grammar"
+    },
+    {
+      "name": "repetition-too-big",
+      "grammar": "bad/big-rep.gbnf",
+      "sample": "a a.",
+      "output": "parse: error parsing grammar: number of rules that are going to be repeated multiplied by the new repetition exceeds sane defaults, please reduce the number of repetitions or rule complexity\nroot ::= (\"a\" \"b\"? \"c\"?){0,1500}\nfailed to parse grammar\nFailed to initialize llama_grammar"
+    },
+    {
+      "name": "max-clamped",
+      "grammar": "bad/clamp.gbnf",
+      "sample": "a a.",
+      "output": "Input string is invalid according to the grammar.\nError: Unexpected character ' ' at position 1\nInput string:\na a."
+    },
+    {
+      "name": "leading-pipe",
+      "grammar": "bad/leading-pipe.gbnf",
+      "sample": "a a.",
+      "output": "parse: error parsing grammar: expecting name at | \"b\"\nitem ::= \"a\"\nroot ::= item\n| \"b\"\nitem ::= \"a\"\nfailed to parse grammar"
+    },
+    {
+      "name": "left-recursion",
+      "grammar": "bad/left-rec.gbnf",
+      "sample": "a a.",
+      "output": "unsupported grammar, left recursion detected for nonterminal at index 0\nFailed to initialize llama_grammar"
+    },
+    {
+      "name": "duplicate-root",
+      "grammar": "bad/loops.gbnf",
+      "sample": "a a.",
+      "output": "Input string is invalid according to the grammar.\nError: Unexpected character 'a' at position 0\nInput string:\na a."
+    },
+    {
+      "name": "no-root",
+      "grammar": "bad/no-root.gbnf",
+      "sample": "a a.",
+      "output": "grammar does not contain a 'root' symbol\nFailed to initialize llama_grammar"
+    },
+    {
+      "name": "nullable-loop-accepted",
+      "grammar": "bad/nullable.gbnf",
+      "sample": "a a.",
+      "output": "Input string is valid according to the grammar."
+    },
+    {
+      "name": "undefined-rule",
+      "grammar": "bad/undefined.gbnf",
+      "sample": "a a.",
+      "output": "parse: error parsing grammar: Undefined rule identifier 'name'\nroot ::= greeting \" \" name\ngreeting ::= \"hi\" | \"hello\"\nunused ::= \"x\"\nfailed to parse grammar\nFailed to initialize llama_grammar"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+root ::= (ws item)* "."
+ws ::= [ ]*
+item ::= "a"?
+opt ::= "x"? "x"? "x"? "x"? "x"?
+root ::= opt

@@ -1,0 +1,5 @@
+# Accepted by llama.cpp, but not doing what it looks like.
+root     ::= greeting name ".\n"
+greeting ::= ("hi" | "hello") " "
+name     ::= [a-z]{1,3000}
+greeting ::= "hey" " "

@@ -1,0 +1,3 @@
+root ::= (ws item)* "."
+ws ::= [ ]*
+item ::= "a"?
