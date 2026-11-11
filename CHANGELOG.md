@@ -1,0 +1,21 @@
+# Changelog
+
+All notable changes to this project are documented here.
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
+
+## [Unreleased]
+
+## [0.1.0] - 2026-11-11
+
+### Added
+- Parser that follows llama.cpp's GBNF rules (commit af6b524) and keeps line and column for every node.
+- 15 diagnostic codes: syntax errors, undefined rules, missing `root`, left recursion, repetition limits,
+  nesting depth, and warnings for duplicate rules, clamped `{m,n}`, empty loops, `x? x? x?` chains and unused rules.
+- Sample matcher that counts repetitions instead of expanding them, with an input and step budget.
+- `parseValidatorOutput` to read the output of llama.cpp's `test-gbnf-validator`.
+- `gbnf-lens check` CLI with `--sample`, `--sample-text`, `--json`, `--strict`, `--max-steps`, `--max-input` and exit codes 0, 1 and 2.
+- VS Code extension (run from source): `.gbnf` language, highlighting, diagnostics, go to definition and
+  the "GBNF: Check Sample Against Grammar" command.
+- Recorded comparison against llama.cpp af6b524 (14 cases).
+- `matchSample` reports why a sample is `inconclusive`: `budget` (`--max-steps`), `input-too-long` (`--max-input`, default 100000 code points), `stack-depth` or `needs-vocab`, each with its own message.
+- A repeat count above 2^64-1 is a parse error; an unclosed parenthesis is reported at the opening `(` with `line:column`.
