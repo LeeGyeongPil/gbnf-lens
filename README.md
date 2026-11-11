@@ -25,7 +25,7 @@ llama.cpp reports a bad grammar as a single line without a position, for example
 
 | Part | Version I checked | Notes |
 |---|---|---|
-| Node.js | 26.13.0 (the package declares `>=20`) | Needed for the CLI, the library, and building the extension |
+| Node.js | 26.13.0 and 20.20.2 (the package declares `>=20`; the 37 tests pass on both, and CI runs Node 20 and 22) | Needed for the CLI, the library, and building the extension |
 | npm | the one that ships with that Node | Dependencies are dev-only: TypeScript 7.0.2, esbuild 0.28.2, `@types/node` 26.6.6, `@types/vscode` 1.90.0 |
 | VS Code | not verified in a real editor | The manifest declares `^1.90.0`. The extension logic is tested without VS Code (see [Limits](#limits)) |
 | llama.cpp | commit `af6b524` | Only used as recorded reference output in `fixtures/llamacpp/cases.json`, never run by the tool |
@@ -308,6 +308,10 @@ Checked on 2026-11-11. Only what I observed is listed.
 - **Sample length.** Samples longer than 100000 code points are not checked unless you raise `--max-input`; the answer is `inconclusive` with a message saying so.
 - **Large repeat counts lose precision.** Numbers above 2^53 in a `{m,n}` are read as JavaScript numbers and rounded; the limits that matter (2000 and 256) are far below that, but the reported count can be off for absurd values.
 - **Long sample lines are printed whole.** When a sample is rejected, the offending line is printed in full, with no truncation, so one very long line fills the terminal.
+- **Test files in subfolders are not found.** `scripts/run-tests.mjs` lists only the top level of `test/`.
+- **Unreadable file summary.** When a grammar file cannot be read, the summary line wording is not specific about it.
+- **CLI output is English only.** The CLI has no Korean output yet.
+- **npm warning.** Newer npm versions may print an `install-scripts ... allowScripts` warning for esbuild; the build still succeeds.
 - **Not yet built:** `--oracle` (run a local validator side by side), hover, find references, a `.vsix` package, a formatter.
 
 ## Troubleshooting

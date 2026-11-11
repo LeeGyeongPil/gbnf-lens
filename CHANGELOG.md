@@ -5,6 +5,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-11
+
+### Fixed
+- `npm test` no longer relies on `node --test "glob"`, which Node 20 does not understand (the package supports Node 20 and up).
+  Tests now run through `scripts/run-tests.mjs`, which lists the test files itself.
+- CI runs on Node 20 and 22, with read-only token permissions and a job timeout, so a Node-version problem shows up in the matrix.
+
 ## [0.1.0] - 2026-11-11
 
 ### Added
