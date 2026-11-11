@@ -1,6 +1,6 @@
 {
   "name": "gbnf-lens",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Lint, explain and sample-check llama.cpp GBNF grammars before you send them to a local LLM server. Library, CLI and VS Code extension.",
   "license": "MIT",
   "author": "LeeGyeongPil",

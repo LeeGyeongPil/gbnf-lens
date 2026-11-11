@@ -2,7 +2,7 @@
   "name": "gbnf-lens-vscode",
   "displayName": "GBNF Lens",
   "description": "Diagnostics, go-to-definition and sample checking for llama.cpp GBNF grammars.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "LeeGyeongPil",
   "license": "MIT",
   "private": true,

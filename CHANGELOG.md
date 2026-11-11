@@ -5,6 +5,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-11
+
+### Fixed
+- `npm test` failed with the npm that comes with Node 20 and 22 (npm 10), which is what CI uses.
+  npm 10 runs the `prepare` script on `npm pack` even with `--ignore-scripts`, so the packaging test
+  rebuilt `dist/` while other tests were reading it and got build output mixed into the JSON.
+  The test now packs a copy of the package without scripts and checks that `dist/` was not rebuilt.
+  The published files do not change.
+
 ## [0.1.1] - 2026-11-11
 
 ### Fixed
