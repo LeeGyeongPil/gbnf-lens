@@ -1,6 +1,6 @@
 {
   "name": "gbnf-lens",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Lint, explain and sample-check llama.cpp GBNF grammars before you send them to a local LLM server. Library, CLI and VS Code extension.",
   "license": "MIT",
   "author": "LeeGyeongPil",
@@ -48,7 +48,7 @@
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build": "node scripts/build.mjs",
-    "test": "npm run build && node --test \"test/**/*.test.mjs\"",
+    "test": "npm run build && node scripts/run-tests.mjs",
     "demo": "npm run build && node scripts/demo.mjs",
     "prepare": "node scripts/build.mjs"
   },
