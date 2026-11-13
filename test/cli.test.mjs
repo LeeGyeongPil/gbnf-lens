@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { test } from "node:test";
-import { cliPath, root } from "./helpers.mjs";
+import { cleanEnv, cliPath, root } from "./helpers.mjs";
 
-const run = (...args) => spawnSync(process.execPath, [cliPath, ...args], { cwd: root, encoding: "utf8", timeout: 20000 });
+const run = (...args) => spawnSync(process.execPath, [cliPath, ...args], { cwd: root, encoding: "utf8", timeout: 20000, env: cleanEnv() });
 
 test("reports where a sample stops matching: CLI output", () => {
   const r = run("check", "fixtures/grammars/json.gbnf", "--sample-text", '{"a": 1,}');

@@ -4,14 +4,14 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { cliPath, fixture, lib, root } from "./helpers.mjs";
+import { cleanEnv, cliPath, fixture, lib, root } from "./helpers.mjs";
 
 test("large repetitions stay within 64MB heap and 3s", () => {
   const started = Date.now();
   const run = spawnSync(
     process.execPath,
     ["--max-old-space-size=64", cliPath, "check", "fixtures/bad/big-rep.gbnf", "fixtures/bad/clamp.gbnf", "fixtures/bad/rep-2000.gbnf"],
-    { cwd: root, encoding: "utf8", timeout: 3000 },
+    { cwd: root, encoding: "utf8", timeout: 3000, env: cleanEnv() },
   );
   assert.equal(run.error, undefined, "the process must finish within 3 seconds");
   assert.equal(run.signal, null);
@@ -73,7 +73,7 @@ test("inconclusive messages name the real cause and a fix that works", () => {
     const run = (grammar, sample, ...extra) => {
       writeFileSync(join(dir, "g.gbnf"), grammar);
       writeFileSync(join(dir, "s.txt"), sample);
-      return spawnSync(process.execPath, [cliPath, "check", join(dir, "g.gbnf"), "--sample", join(dir, "s.txt"), ...extra], { encoding: "utf8" }).stdout;
+      return spawnSync(process.execPath, [cliPath, "check", join(dir, "g.gbnf"), "--sample", join(dir, "s.txt"), ...extra], { encoding: "utf8", env: cleanEnv() }).stdout;
     };
     const long = run('root ::= "a"*\n', "a".repeat(20), "--max-input", "10");
     assert.match(long, /longer than 10 characters.*--max-input/);
@@ -93,8 +93,8 @@ test("inconclusive messages name the real cause and a fix that works", () => {
 
 test("--max-input lets the CLI check a longer sample", () => {
   const args = ["check", "fixtures/grammars/json.gbnf", "--sample-text", " ".repeat(20) + "1", "--max-input"];
-  const small = spawnSync(process.execPath, [cliPath, ...args, "10"], { cwd: root, encoding: "utf8" });
+  const small = spawnSync(process.execPath, [cliPath, ...args, "10"], { cwd: root, encoding: "utf8", env: cleanEnv() });
   assert.match(small.stdout, /--max-input/);
-  const big = spawnSync(process.execPath, [cliPath, ...args, "100"], { cwd: root, encoding: "utf8" });
+  const big = spawnSync(process.execPath, [cliPath, ...args, "100"], { cwd: root, encoding: "utf8", env: cleanEnv() });
   assert.doesNotMatch(big.stdout, /inconclusive/);
 });
