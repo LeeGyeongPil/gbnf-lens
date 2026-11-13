@@ -5,6 +5,25 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-13
+
+### Added
+- `--lang en|ko` option for the CLI, and the `GBNF_LENS_LANG` environment variable. The language is chosen in this order:
+  `--lang`, `GBNF_LENS_LANG`, then `LC_ALL`, `LC_MESSAGES` and `LANG`. A value starting with `ko` gives Korean, anything else gives English.
+  A bad `--lang` value is a usage error (exit code 2).
+- Korean text for the CLI help, usage and file errors, diagnostics, sample results and the summary line.
+- VS Code extension: command titles and descriptions (`package.nls.ko.json`), notifications and the file picker button (`l10n/bundle.l10n.ko.json`),
+  and diagnostic messages now follow the VS Code display language (Korean for `ko*`, English otherwise).
+- Library: optional `lang` option (`"en"` | `"ko"`) on `lintGrammar`, `parseGrammar` and `matchSample`. Without it the messages are English, as before.
+  Other values never throw: a string starting with `ko` (such as `"ko-KR"`) gives Korean, anything else gives English.
+- The CLI also accepts `--lang` before the command (`gbnf-lens --lang ko check grammar.gbnf`).
+  A leading `--lang` with no value, or followed directly by the command, is reported as a `--lang` error (exit code 2).
+
+### Changed
+- When the locale is Korean (for example `LANG=ko_KR.UTF-8`) and no `--lang` is given, the human-readable CLI output and the `message` field of `--json` are now Korean.
+  Scripts that match message text should pass `--lang en` or set `GBNF_LENS_LANG=en`. `code`, `severity`, the other JSON keys,
+  the exit codes and the text after `llama.cpp says:` do not change with the language.
+
 ## [0.1.2] - 2026-11-11
 
 ### Fixed
@@ -35,3 +54,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Recorded comparison against llama.cpp af6b524 (14 cases).
 - `matchSample` reports why a sample is `inconclusive`: `budget` (`--max-steps`), `input-too-long` (`--max-input`, default 100000 code points), `stack-depth` or `needs-vocab`, each with its own message.
 - A repeat count above 2^64-1 is a parse error; an unclosed parenthesis is reported at the opening `(` with `line:column`.
+
+[Unreleased]: https://github.com/LeeGyeongPil/gbnf-lens/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/LeeGyeongPil/gbnf-lens/compare/v0.1.2...v0.2.0
+[0.1.2]: https://github.com/LeeGyeongPil/gbnf-lens/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/LeeGyeongPil/gbnf-lens/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/LeeGyeongPil/gbnf-lens/releases/tag/v0.1.0
