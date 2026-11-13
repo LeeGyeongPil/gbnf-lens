@@ -4,7 +4,7 @@
 
 Check llama.cpp GBNF grammars (the grammar files that constrain what a local LLM may generate) in the terminal, in CI and in VS Code, before you send them to a server. gbnf-lens gives you a verdict that follows llama.cpp's own parse rules, line and column positions, warnings where llama.cpp silently changes the meaning of a grammar, and the exact spot where an example string stops matching. It is a zero-dependency TypeScript library, a CLI and a VS Code extension.
 
-![gbnf-lens telling you where a sample stops matching the grammar](docs/images/01-hero.png)
+![gbnf-lens telling you where a sample stops matching the grammar](docs/images/01-hero.en.png)
 *A sample that does not match: the position (1:39), what the grammar expected instead, and a caret under the offending character.*
 
 ## What it adds
@@ -25,8 +25,8 @@ llama.cpp reports a bad grammar as a single line without a position, for example
 
 | Part | Version I checked | Notes |
 |---|---|---|
-| Node.js | 26.13.0, 22.23.4 and 20.20.2 (the package declares `>=20`; the 37 tests pass on all three, and CI runs Node 20 and 22) | Needed for the CLI, the library, and building the extension |
-| npm | 11.20.0, 10.9.9 and 10.8.2, the ones that ship with those Node versions | Dependencies are dev-only: TypeScript 7.0.2, esbuild 0.28.2, `@types/node` 26.6.6, `@types/vscode` 1.90.0 |
+| Node.js | 26.13.0 and 20.20.2 (the package declares `>=20`; the full `npm test` suite passed on both on 2026-11-13, and CI runs Node 20 and 22) | Needed for the CLI, the library, and building the extension |
+| npm | 11.20.0 and 10.8.2, the ones that ship with those Node versions | Dependencies are dev-only: TypeScript 7.0.2, esbuild 0.28.2, `@types/node` 26.6.6, `@types/vscode` 1.90.0 |
 | VS Code | not verified in a real editor | The manifest declares `^1.90.0`. The extension logic is tested without VS Code (see [Limits](#limits)) |
 | llama.cpp | commit `af6b524` | Only used as recorded reference output in `fixtures/llamacpp/cases.json`, never run by the tool |
 
@@ -61,8 +61,17 @@ npm run demo
 ### Command line
 
 ```bash
-node dist/cli.js check <files...> [--sample <file>] [--sample-text <text>] [--json] [--strict] [--max-steps <n>] [--max-input <n>]
+node dist/cli.js check <files...> [--sample <file>] [--sample-text <text>] [--json] [--strict] [--max-steps <n>] [--max-input <n>] [--lang en|ko]
 ```
+
+**Language.** Messages, help and the summary line come in English or Korean. The order is `--lang en|ko`, then the `GBNF_LENS_LANG` variable, then `LC_ALL`, `LC_MESSAGES` and `LANG`; a value that starts with `ko` gives Korean and anything else gives English. `--lang` can come before `check` (`--lang ko check ...`, `--lang=ko check ...`) or after it. A missing value, or one that is not `en` or `ko`, is a usage error (exit code 2) in either place, and the message names the `--lang` value (for example `--lang check x` gives `--lang needs 'en' or 'ko', got 'check'`). `code`, `severity` and the JSON keys never change, and the text after `llama.cpp says:` is llama.cpp's own and stays as it is. `--json` `message` follows the chosen language.
+
+```bash
+node dist/cli.js check grammar.gbnf --lang ko
+GBNF_LENS_LANG=ko node dist/cli.js check grammar.gbnf
+```
+
+The examples below show English output; on a Korean locale add `--lang en` to get the same text.
 
 | Exit code | Meaning |
 |---|---|
@@ -215,11 +224,13 @@ Output:
 }
 ```
 
+Pass `{ lang: "ko" }` as the options argument (`lintGrammar(text, { lang: "ko" })`, also `parseGrammar` and `matchSample`) to get Korean messages; the default is English, and the type of the option is exported as `Language` (`"en" | "ko"`). Other values do not throw: a string that starts with `ko` (such as `"ko-KR"` or `"KO"`) gives Korean, and anything else (such as `"fr"` or `"EN"`) gives English.
+
 `lintGrammar` never throws for bad grammar text (it returns diagnostics) and throws `TypeError` only when the argument is not a string. `matchSample` returns one of `accept`, `reject`, `grammar-error`, or `inconclusive` (the step budget or the input limit was exceeded, the grammar recurses too deeply on this sample, or it uses token terminals such as `<[1000]>` that need the model's vocabulary).
 
 ### VS Code extension
 
-The extension lives in `extension/` and is not published to any marketplace. It adds the `.gbnf` language with highlighting, live diagnostics (the same ones the CLI prints, shown as squiggles with the llama.cpp message as related information), go to definition from a rule reference, and the command **GBNF: Check Sample Against Grammar**. For that command, select the sample text in the editor and run it; with no selection it asks you for a file.
+The extension lives in `extension/` and is not published to any marketplace. It adds the `.gbnf` language with highlighting, live diagnostics (the same ones the CLI prints, shown as squiggles with the llama.cpp message as related information), go to definition from a rule reference, and the command **GBNF: Check Sample Against Grammar**. Command titles, notifications and diagnostic messages follow the VS Code display language (Korean when it starts with `ko`, English otherwise); `llama.cpp says:` text stays as it is. For that command, select the sample text in the editor and run it; with no selection it asks you for a file.
 
 To try it from source:
 
@@ -310,8 +321,6 @@ Checked on 2026-11-11. Only what I observed is listed.
 - **Long sample lines are printed whole.** When a sample is rejected, the offending line is printed in full, with no truncation, so one very long line fills the terminal.
 - **Test files in subfolders are not found.** `scripts/run-tests.mjs` lists only the top level of `test/`.
 - **Unreadable file summary.** When a grammar file cannot be read, the summary line wording is not specific about it.
-- **English-only output.** CLI messages and help are English; there is no `--lang` option yet.
-- **CLI output is English only.** The CLI has no Korean output yet.
 - **npm warning.** Newer npm versions may print an `install-scripts ... allowScripts` warning for esbuild; the build still succeeds.
 - **Not yet built:** `--oracle` (run a local validator side by side), hover, find references, a `.vsix` package, a formatter.
 
@@ -322,6 +331,7 @@ Checked on 2026-11-11. Only what I observed is listed.
 | `Cannot find module .../dist/cli.js` | The project was not built | Run `npm install` (it builds) or `npm run build` |
 | `unknown command 'check ...'` | The whole command was passed as one quoted argument | Write `check` and the file as separate words |
 | Exit code 2 and `cannot read '...'` | The file path is wrong | Check the path; it is relative to where you run the command |
+| Exit code 2 and `--lang needs 'en' or 'ko'` | `--lang` has no value or another value (`fr`, `ko-KR`) | Use `--lang en` or `--lang ko`; for locale-style values use `GBNF_LENS_LANG` or `LANG` |
 | Sample `inconclusive` with `needs vocab` | The grammar has token terminals | Use a grammar without tokens for the sample check, or check the sample against the model itself |
 | Sample `inconclusive` with `longer than 100000 characters` | The sample is over the input limit | Pass `--max-input <n>` with a larger number |
 | Squiggles do not appear in VS Code | The file is not recognised as GBNF, or the extension is not loaded | Use the `.gbnf` extension and check the language mode in the status bar |
@@ -330,7 +340,7 @@ Checked on 2026-11-11. Only what I observed is listed.
 
 ```bash
 npm install
-npm test          # builds, then runs 37 tests; all 37 passed on 2026-11-11
+npm test          # builds, then runs the whole suite; it passed if the summary shows "fail 0"
 npm run demo      # the five-step tour
 npm run typecheck
 ```

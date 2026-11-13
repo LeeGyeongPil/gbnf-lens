@@ -4,7 +4,7 @@
 
 llama.cpp GBNF 문법(로컬 LLM이 만들어 낼 수 있는 출력을 제한하는 문법 파일)을 서버에 보내기 전에 터미널·CI·VS Code에서 점검합니다. gbnf-lens 는 llama.cpp 의 파싱 규칙을 따른 판정, 줄·열 위치, llama.cpp 가 말없이 뜻을 바꾸는 곳에 대한 경고, 예시 문자열이 어디에서 문법과 어긋나는지를 알려 줍니다. 런타임 의존성이 없는 TypeScript 라이브러리, CLI, VS Code 확장입니다.
 
-![문법과 어긋나는 샘플의 위치를 알려 주는 gbnf-lens](docs/images/01-hero.png)
+![문법과 어긋나는 샘플의 위치를 알려 주는 gbnf-lens](docs/images/01-hero.ko.png)
 *문법과 맞지 않는 샘플: 위치(1:39), 그 자리에서 문법이 기대한 것, 문제 글자 아래의 캐럿(^).*
 
 ## 무엇을 더해 주나요
@@ -25,8 +25,8 @@ llama.cpp 는 잘못된 문법을 위치 없는 한 줄로만 알려 줍니다. 
 
 | 부분 | 확인한 버전 | 비고 |
 |---|---|---|
-| Node.js | 26.13.0, 22.23.4, 20.20.2 (패키지는 `>=20` 선언, 37개 테스트가 세 버전에서 통과, CI 는 Node 20·22 로 실행) | CLI, 라이브러리, 확장 빌드에 필요 |
-| npm | 11.20.0, 10.9.9, 10.8.2 (위 Node 에 들어 있는 것) | 의존성은 개발용뿐: TypeScript 7.0.2, esbuild 0.28.2, `@types/node` 26.6.6, `@types/vscode` 1.90.0 |
+| Node.js | 26.13.0, 20.20.2 (패키지는 `>=20` 선언, 2026-11-13 에 두 버전에서 `npm test` 전체 통과, CI 는 Node 20·22 로 실행) | CLI, 라이브러리, 확장 빌드에 필요 |
+| npm | 11.20.0, 10.8.2 (위 Node 에 들어 있는 것) | 의존성은 개발용뿐: TypeScript 7.0.2, esbuild 0.28.2, `@types/node` 26.6.6, `@types/vscode` 1.90.0 |
 | VS Code | 실제 에디터에서는 확인하지 못함 | 매니페스트는 `^1.90.0` 선언. 확장 로직은 VS Code 없이 테스트함([한계](#한계) 참고) |
 | llama.cpp | 커밋 `af6b524` | `fixtures/llamacpp/cases.json` 에 기록된 기준 출력으로만 쓰이고 도구가 직접 실행하지 않음 |
 
@@ -43,9 +43,9 @@ npm install      # "prepare" 스크립트가 dist/ 와 extension/dist/ 도 빌�
 동작 확인:
 
 ```console
-$ node dist/cli.js check examples/tool-call.gbnf
+$ node dist/cli.js check examples/tool-call.gbnf --lang ko
 examples/tool-call.gbnf: ok
-checked 1 file(s): 0 error(s), 0 warning(s)
+1개 파일 검사: 오류 0개, 경고 0개
 ```
 
 PATH 에 `gbnf-lens` 명령을 두려면 clone 안에서 `npm link` 를 실행합니다. 아래 예시는 그것 없이도 되도록 `node dist/cli.js` 로 씁니다.
@@ -61,8 +61,17 @@ npm run demo
 ### 명령줄
 
 ```bash
-node dist/cli.js check <files...> [--sample <file>] [--sample-text <text>] [--json] [--strict] [--max-steps <n>] [--max-input <n>]
+node dist/cli.js check <files...> [--sample <file>] [--sample-text <text>] [--json] [--strict] [--max-steps <n>] [--max-input <n>] [--lang en|ko]
 ```
+
+**언어.** 메시지, 도움말, 요약 줄을 영어 또는 한국어로 볼 수 있습니다. 순서는 `--lang en|ko`, 그다음 `GBNF_LENS_LANG` 환경 변수, 그다음 `LC_ALL`, `LC_MESSAGES`, `LANG` 이며, 값이 `ko` 로 시작하면 한국어, 그 밖에는 영어입니다. `--lang` 은 `check` 앞에 와도 되고(`--lang ko check ...`, `--lang=ko check ...`) 뒤에 와도 됩니다. 값이 없거나 `en`·`ko` 가 아니면 어느 자리든 사용법 오류(종료 코드 2)이고, 오류 문구가 `--lang` 값을 가리킵니다. 이 오류 문구의 언어는 `GBNF_LENS_LANG`·`LANG` 을 따르므로, 한국어 환경(예: `LANG=ko_KR.UTF-8`)에서 `--lang check x` 는 `--lang 에는 'en' 또는 'ko' 가 필요합니다 (받은 값: 'check')` 를 출력합니다(영어 환경에서는 `--lang needs 'en' or 'ko', got 'check'`). `code`, `severity`, JSON 키는 바뀌지 않고, `llama.cpp says:` 뒤의 글은 llama.cpp 원문 그대로입니다. `--json` 의 `message` 는 고른 언어를 따릅니다.
+
+```bash
+node dist/cli.js check grammar.gbnf --lang ko
+GBNF_LENS_LANG=ko node dist/cli.js check grammar.gbnf
+```
+
+아래 출력 예시와 스크린샷은 모두 `--lang ko` 로 실행한 한국어 화면입니다(영어 화면은 [README.md](README.md)). 스크린샷의 `gbnf-lens` 는 `npm link` 뒤의 같은 명령이고, 글 상자는 링크 없이 되는 `node dist/cli.js` 로 적었습니다.
 
 | 종료 코드 | 뜻 |
 |---|---|
@@ -73,23 +82,23 @@ node dist/cli.js check <files...> [--sample <file>] [--sample-text <text>] [--js
 **깨끗한 문법과 그것이 받아 주는 샘플.**
 
 ```console
-$ node dist/cli.js check examples/tool-call.gbnf --sample examples/tool-call.ok.txt
-examples/tool-call.gbnf: sample accepted
+$ node dist/cli.js check examples/tool-call.gbnf --sample examples/tool-call.ok.txt --lang ko
+examples/tool-call.gbnf: 샘플이 문법과 일치합니다
 examples/tool-call.gbnf: ok
-checked 1 file(s): 0 error(s), 0 warning(s)
+1개 파일 검사: 오류 0개, 경고 0개
 ```
 
-![깨끗한 문법과 받아들여진 샘플](docs/images/02-clean.png)
-*종료 코드 0: 고칠 것이 없습니다.*
+![깨끗한 문법과 받아들여진 샘플](docs/images/02-clean.ko.png)
+*"샘플이 문법과 일치합니다" 와 "오류 0개, 경고 0개": 종료 코드 0, 고칠 것이 없습니다.*
 
 **멈추는 샘플**(종료 코드 1). 위치, 코드 포인트 오프셋(llama.cpp 검증기와 같은 세는 방식), 그 자리에서 문법이 받아 줄 것들의 집합이 나옵니다.
 
 ```console
-$ node dist/cli.js check examples/tool-call.gbnf --sample examples/tool-call.bad.txt
-examples/tool-call.gbnf: sample rejected at 1:39 (offset 38): unexpected '}', expected one of [ \t\n], "\"", "-", [0-9], "t", "f", "n"
+$ node dist/cli.js check examples/tool-call.gbnf --sample examples/tool-call.bad.txt --lang ko
+examples/tool-call.gbnf: 샘플이 1:39 (오프셋 38) 에서 거부되었습니다: 예상하지 못한 '}', 예상: 다음 중 하나 [ \t\n], "\"", "-", [0-9], "t", "f", "n"
   {"name": "search", "arguments": {"q": }}
                                         ^
-checked 1 file(s): 0 error(s), 0 warning(s)
+1개 파일 검사: 오류 0개, 경고 0개
 ```
 
 `"q":` 뒤의 값이 빠졌으므로 문법은 공백, 문자열, 숫자, `true`·`false`·`null` 을 기대했습니다.
@@ -97,68 +106,68 @@ checked 1 file(s): 0 error(s), 0 warning(s)
 **위치가 붙은 문법 오류**(종료 코드 1):
 
 ```console
-$ node dist/cli.js check fixtures/bad/leading-pipe.gbnf
-fixtures/bad/leading-pipe.gbnf:2:1 error parse: expecting name — a line cannot start with '|'; put '|' at the end of the previous line or wrap the alternatives in ( )
+$ node dist/cli.js check fixtures/bad/leading-pipe.gbnf --lang ko
+fixtures/bad/leading-pipe.gbnf:2:1 error parse: 규칙 이름이 필요합니다 — 줄은 '|' 로 시작할 수 없습니다. '|' 를 앞 줄 끝으로 옮기거나 선택지를 ( ) 로 감싸세요
   | "b"
   ^
   llama.cpp says: expecting name at | "b"
-checked 1 file(s): 1 error(s), 0 warning(s)
+1개 파일 검사: 오류 1개, 경고 0개
 ```
 
-![줄·열·힌트가 붙은 문법 오류](docs/images/03-syntax-error.png)
-*llama.cpp 는 `expecting name at | "b"` 만 말합니다. 나머지 줄이 위치와 고치는 방법입니다.*
+![줄·열·힌트가 붙은 문법 오류](docs/images/03-syntax-error.ko.png)
+*llama.cpp 는 마지막에서 두 번째 줄의 `expecting name at | "b"`(원문 그대로)만 말합니다. 그 위의 `2:1`, 원본 줄, 캐럿, "'|' 를 앞 줄 끝으로 옮기거나…" 힌트가 gbnf-lens 가 더한 것입니다.*
 
 **반복 한도**(종료 코드 1). llama.cpp 는 반복되는 그룹 안의 규칙 수에 반복 횟수를 곱해 2000 을 넘으면 문법을 거부합니다. gbnf-lens 는 아무것도 펼치지 않고 같은 수를 계산합니다.
 
 ```console
-$ node dist/cli.js check examples/tool-call-too-many.gbnf
-examples/tool-call-too-many.gbnf:3:11 error repetition-threshold: 6 rules x 1500 = 9000 > 2000 (llama.cpp refuses this grammar). It multiplies the number of rules inside the repeated part by the repetition count; lower the count or simplify the repeated part.
+$ node dist/cli.js check examples/tool-call-too-many.gbnf --lang ko
+examples/tool-call-too-many.gbnf:3:11 error repetition-threshold: 규칙 6개 x 1500 = 9000 > 2000 (llama.cpp 가 이 문법을 거부합니다). 반복되는 부분 안의 규칙 수에 반복 횟수를 곱한 값입니다. 횟수를 줄이거나 반복되는 부분을 단순하게 만드세요.
   root  ::= ("name=" value (",unit=" value)? (",lang=" value)?){0,1500}
             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   llama.cpp says: number of rules that are going to be repeated multiplied by the new repetition exceeds sane defaults, please reduce the number of repetitions or rule complexity
-checked 1 file(s): 1 error(s), 0 warning(s)
+1개 파일 검사: 오류 1개, 경고 0개
 ```
 
-![계산된 규칙 수와 함께 나온 반복 한도 오류](docs/images/04-repetition-limit.png)
-*6 rules x 1500 = 9000 이 한도 2000 을 넘습니다.*
+![계산된 규칙 수와 함께 나온 반복 한도 오류](docs/images/04-repetition-limit.ko.png)
+*`규칙 6개 x 1500 = 9000 > 2000`: 한도 2000 을 넘습니다. 물결선(~)이 반복되는 그룹 전체를 가리킵니다.*
 
 **받아 주지만 보이는 것과 다른 경우**(경고, 종료 코드 0):
 
 ```console
-$ node dist/cli.js check examples/silent.gbnf
-examples/silent.gbnf:4:14 warning max-clamped: {1,3000}: llama.cpp silently treats max > 2000 as unbounded ({1,}); the upper limit you wrote is not enforced.
+$ node dist/cli.js check examples/silent.gbnf --lang ko
+examples/silent.gbnf:4:14 warning max-clamped: {1,3000}: llama.cpp 는 max > 2000 를 조용히 제한 없음({1,})으로 처리합니다. 적어 둔 상한은 지켜지지 않습니다.
   name     ::= [a-z]{1,3000}
                ^~~~~~~~~~~~~
-examples/silent.gbnf:5:1 warning duplicate-rule: rule 'greeting' is defined again (first at 3:1); llama.cpp silently keeps the last definition
+examples/silent.gbnf:5:1 warning duplicate-rule: 규칙 'greeting' 이 다시 정의되었습니다 (처음은 3:1). llama.cpp 는 조용히 마지막 정의를 씁니다
   greeting ::= "hey" " "
   ^~~~~~~~
-checked 1 file(s): 0 error(s), 2 warning(s)
+1개 파일 검사: 오류 0개, 경고 2개
 ```
 
-![잘린 반복과 중복 규칙 경고](docs/images/05-silent-changes.png)
-*llama.cpp 는 이 문법을 아무 말 없이 로드합니다. 첫 `greeting` 규칙은 버려지고 `{1,3000}` 은 사실 `{1,}` 입니다.*
+![잘린 반복과 중복 규칙 경고](docs/images/05-silent-changes.ko.png)
+*경고 2개(`max-clamped`, `duplicate-rule`), 오류 0개. llama.cpp 는 이 문법을 아무 말 없이 로드하지만, 첫 `greeting` 규칙은 버려지고 `{1,3000}` 은 사실 `{1,}` 입니다.*
 
 **왼쪽 재귀**(종료 코드 1). 자기 자신으로 돌아오는 규칙 경로로 보여 줍니다.
 
 ```console
-$ node dist/cli.js check fixtures/bad/left-rec.gbnf
-fixtures/bad/left-rec.gbnf:2:1 error left-recursion: left recursion: root -> expr -> expr. llama.cpp refuses grammars where a rule can begin with itself; rewrite it as a loop, e.g. expr ::= term ("+" term)*.
+$ node dist/cli.js check fixtures/bad/left-rec.gbnf --lang ko
+fixtures/bad/left-rec.gbnf:2:1 error left-recursion: 좌재귀: root -> expr -> expr. llama.cpp 는 규칙이 자기 자신으로 시작하는 문법을 거부합니다. 반복문으로 바꾸세요. 예: expr ::= term ("+" term)*.
   expr ::= expr "+" num | num
   ^~~~
-checked 1 file(s): 1 error(s), 0 warning(s)
+1개 파일 검사: 오류 1개, 경고 0개
 ```
 
-![규칙 경로로 표시된 왼쪽 재귀](docs/images/06-left-recursion.png)
-*메시지가 제안하는 해결책: 재귀를 반복문 형태로 바꿉니다.*
+![규칙 경로로 표시된 왼쪽 재귀](docs/images/06-left-recursion.ko.png)
+*`좌재귀: root -> expr -> expr` 경로와, 메시지가 제안하는 해결책 `expr ::= term ("+" term)*`(재귀를 반복문으로 바꾸기).*
 
 **스크립트·CI 용.** `--json` 은 `{file, line, column, endLine, endColumn, severity, code, message}` 배열을 출력합니다. `--strict` 는 경고도 실패로 칩니다.
 
 ```console
-$ node dist/cli.js check examples/silent.gbnf --strict > /dev/null; echo "exit $?"
+$ node dist/cli.js check examples/silent.gbnf --strict --lang ko > /dev/null; echo "exit $?"
 exit 1
-$ node dist/cli.js check nope.gbnf; echo "exit $?"
-gbnf-lens: cannot read 'nope.gbnf': ENOENT: no such file or directory, open 'nope.gbnf'
-checked 1 file(s): 0 error(s), 0 warning(s)
+$ node dist/cli.js check nope.gbnf --lang ko; echo "exit $?"
+gbnf-lens: 'nope.gbnf' 을 읽을 수 없습니다: ENOENT: no such file or directory, open 'nope.gbnf'
+1개 파일 검사: 오류 0개, 경고 0개
 exit 2
 ```
 
@@ -166,10 +175,10 @@ exit 2
 
 ```console
 $ node -e "console.log('a'.repeat(200000))" > long.txt
-$ node dist/cli.js check examples/tool-call.gbnf --sample long.txt
-examples/tool-call.gbnf: sample inconclusive: the sample is longer than 100000 characters (code points); raise --max-input to check it anyway
+$ node dist/cli.js check examples/tool-call.gbnf --sample long.txt --lang ko
+examples/tool-call.gbnf: 샘플 판정 불가: 샘플이 100000자(코드 포인트)보다 깁니다. 그래도 검사하려면 --max-input 을 늘리세요
 examples/tool-call.gbnf: ok
-checked 1 file(s): 0 error(s), 0 warning(s)
+1개 파일 검사: 오류 0개, 경고 0개
 ```
 
 `inconclusive` 에는 다른 원인이 셋 더 있고 메시지가 각각 다릅니다: `--max-steps` 소진(올려서 다시 시도), 이 샘플에서 문법이 너무 깊게 재귀함(깊은 오른쪽 재귀, 예산을 늘려도 소용없으니 `x*` 같은 반복문으로), 모델 어휘가 필요한 토큰 터미널.
@@ -177,12 +186,12 @@ checked 1 file(s): 0 error(s), 0 warning(s)
 **닫히지 않은 괄호**(종료 코드 1)는 여는 괄호를 가리킵니다.
 
 ```console
-$ node dist/cli.js check fixtures/bad/unclosed.gbnf
-fixtures/bad/unclosed.gbnf:3:7 error parse: expecting ')' to close the '(' opened at 3:7
+$ node dist/cli.js check fixtures/bad/unclosed.gbnf --lang ko
+fixtures/bad/unclosed.gbnf:3:7 error parse: 3:7 에서 연 '(' 를 닫는 ')' 가 필요합니다
   b ::= ( "y" | "z"
         ^
   llama.cpp says: expecting ')' at 
-checked 1 file(s): 1 error(s), 0 warning(s)
+1개 파일 검사: 오류 1개, 경고 0개
 ```
 
 반복 횟수가 2^64-1 을 넘는 것도 파싱 오류입니다(`llama.cpp says: stoull`, 소스를 읽고 추론한 것이며 실행해 확인하지 않았습니다).
@@ -215,11 +224,13 @@ console.log(matchSample('root ::= "a" [0-9]+\n', "a12x"));
 }
 ```
 
+옵션 인자에 `{ lang: "ko" }` 를 넘기면(`lintGrammar(text, { lang: "ko" })`, `parseGrammar`·`matchSample` 도 같음) 한국어 메시지를 받습니다. 기본은 영어이며 옵션 타입은 `Language`(`"en" | "ko"`)로 내보냅니다. 그 밖의 값을 넘겨도 예외는 나지 않습니다. `ko` 로 시작하는 문자열(`"ko-KR"`, `"KO"` 등)은 한국어, 그 밖의 값(`"fr"`, `"EN"` 등)은 영어가 됩니다.
+
 `lintGrammar` 는 잘못된 문법 텍스트에 예외를 던지지 않고(진단 목록을 돌려줌) 인자가 문자열이 아닐 때만 `TypeError` 를 던집니다. `matchSample` 은 `accept`, `reject`, `grammar-error`, `inconclusive`(작업 예산이나 입력 길이 한도 초과, 이 샘플에서 문법이 너무 깊게 재귀함, 또는 `<[1000]>` 처럼 모델 어휘가 필요한 토큰 터미널이 있는 문법) 중 하나를 돌려줍니다.
 
 ### VS Code 확장
 
-확장은 `extension/` 에 있고 어느 마켓플레이스에도 올라가 있지 않습니다. `.gbnf` 언어 등록과 문법 강조, 실시간 진단(CLI 와 같은 진단을 물결선으로, llama.cpp 메시지는 관련 정보로), 규칙 참조에서 정의로 이동, **GBNF: Check Sample Against Grammar** 명령을 더합니다. 이 명령은 에디터에서 샘플 텍스트를 선택하고 실행하면 되고, 선택이 없으면 파일을 고르게 합니다.
+확장은 `extension/` 에 있고 어느 마켓플레이스에도 올라가 있지 않습니다. `.gbnf` 언어 등록과 문법 강조, 실시간 진단(CLI 와 같은 진단을 물결선으로, llama.cpp 메시지는 관련 정보로), 규칙 참조에서 정의로 이동, **GBNF: Check Sample Against Grammar** 명령을 더합니다. 명령 제목, 알림, 진단 문구는 VS Code 표시 언어를 따릅니다(`ko` 로 시작하면 한국어, 그 밖에는 영어). `llama.cpp says:` 뒤의 글은 그대로입니다. 이 명령은 에디터에서 샘플 텍스트를 선택하고 실행하면 되고, 선택이 없으면 파일을 고르게 합니다.
 
 소스에서 써 보려면:
 
@@ -310,8 +321,6 @@ flowchart LR
 - **매우 깊은 오른쪽 재귀**에 긴 샘플을 주면 JavaScript 스택이 모자랄 수 있고, 그때는 `inconclusive` 로 답합니다.
 - **하위 폴더의 테스트 파일은 찾지 않습니다.** `scripts/run-tests.mjs` 는 `test/` 최상위만 나열합니다.
 - **읽을 수 없는 파일의 요약 문구.** 문법 파일을 읽지 못했을 때 요약 줄의 문구가 그 사실을 구체적으로 알려 주지 않습니다.
-- **출력은 영어뿐입니다.** CLI 메시지와 도움말이 영어이고 아직 `--lang` 옵션이 없습니다.
-- **CLI 출력은 영어뿐입니다.** CLI 에는 아직 한국어 출력이 없습니다.
 - **npm 경고.** 최신 npm 은 esbuild 에 대해 `install-scripts ... allowScripts` 경고를 낼 수 있으며, 빌드는 성공합니다.
 - **아직 없음:** `--oracle`(로컬 검증기와 나란히 실행), 호버, 참조 찾기, `.vsix` 패키지, 포매터.
 
@@ -320,17 +329,18 @@ flowchart LR
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | `Cannot find module .../dist/cli.js` | 프로젝트를 빌드하지 않음 | `npm install`(빌드 포함) 또는 `npm run build` 실행 |
-| `unknown command 'check ...'` | 명령 전체를 따옴표 하나로 넘김 | `check` 와 파일을 별도 단어로 씀 |
-| 종료 코드 2 와 `cannot read '...'` | 파일 경로가 틀림 | 명령을 실행하는 위치 기준 경로를 확인 |
-| 샘플이 `needs vocab` 로 `inconclusive` | 문법에 토큰 터미널이 있음 | 토큰 없는 문법으로 샘플을 점검하거나 모델로 직접 확인 |
-| 샘플이 `longer than 100000 characters` 로 `inconclusive` | 샘플이 입력 한도를 넘음 | `--max-input <n>` 에 더 큰 수를 줌 |
+| `알 수 없는 명령 'check ...'`(영어: `unknown command`) | 명령 전체를 따옴표 하나로 넘김 | `check` 와 파일을 별도 단어로 씀 |
+| 종료 코드 2 와 `'...' 을 읽을 수 없습니다`(영어: `cannot read`) | 파일 경로가 틀림 | 명령을 실행하는 위치 기준 경로를 확인 |
+| 종료 코드 2 와 `--lang 에는 'en' 또는 'ko' 가 필요합니다` | `--lang` 값이 없거나 다른 값(`fr`, `ko-KR`) | `--lang en` 또는 `--lang ko` 를 씀. 로케일 형식 값은 `GBNF_LENS_LANG`·`LANG` 으로 |
+| `샘플 판정 불가: 어휘가 필요합니다`(영어: `needs vocab`) | 문법에 토큰 터미널이 있음 | 토큰 없는 문법으로 샘플을 점검하거나 모델로 직접 확인 |
+| `샘플 판정 불가: 샘플이 100000자(코드 포인트)보다 깁니다`(영어: `longer than 100000 characters`) | 샘플이 입력 한도를 넘음 | `--max-input <n>` 에 더 큰 수를 줌 |
 | VS Code 에서 물결선이 안 보임 | 파일이 GBNF 로 인식되지 않았거나 확장이 로드되지 않음 | 확장자를 `.gbnf` 로 하고 상태 표시줄의 언어 모드를 확인 |
 
 ## 개발·기여
 
 ```bash
 npm install
-npm test          # 빌드 후 테스트 37개 실행, 2026-11-11 에 37개 모두 통과
+npm test          # 빌드 후 전체 테스트 실행, 요약에 "fail 0" 이 있으면 통과
 npm run demo      # 5단계 투어
 npm run typecheck
 ```
