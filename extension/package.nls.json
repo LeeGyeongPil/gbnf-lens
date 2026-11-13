@@ -1,0 +1,5 @@
+{
+  "displayName": "GBNF Lens",
+  "description": "Diagnostics, go-to-definition and sample checking for llama.cpp GBNF grammars.",
+  "command.checkSample.title": "GBNF: Check Sample Against Grammar"
+}

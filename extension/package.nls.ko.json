@@ -1,0 +1,5 @@
+{
+  "displayName": "GBNF Lens",
+  "description": "llama.cpp GBNF 문법의 진단, 정의로 이동, 샘플 검사.",
+  "command.checkSample.title": "GBNF: 문법에 대해 샘플 검사"
+}

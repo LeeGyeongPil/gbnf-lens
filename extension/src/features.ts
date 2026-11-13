@@ -5,7 +5,14 @@
 import { describeMatch } from "../../src/format.js";
 import { lintGrammar } from "../../src/index.js";
 import { matchSample } from "../../src/match.js";
+import { langFromLocale, msg, type Lang } from "../../src/messages.js";
 import { SourceMap } from "../../src/position.js";
+
+/** Message language for a VS Code display language such as `ko` or `en-US`: Korean for `ko*`, English otherwise. */
+export const languageFor = (vscodeLanguage: string | undefined): Lang => langFromLocale(vscodeLanguage);
+
+/** The llama.cpp prefix used in related information; the text after it is never translated. */
+export const llamaSays = (text: string, lang?: Lang): string => msg(lang, "format.llamaSays", { text });
 
 export interface EditorDiagnostic {
   startLine: number;
@@ -36,9 +43,9 @@ export interface SampleCheck {
 }
 
 /** Diagnostics for the editor's Problems panel. */
-export function computeDiagnostics(text: string): EditorDiagnostic[] {
+export function computeDiagnostics(text: string, lang?: Lang): EditorDiagnostic[] {
   const map = new SourceMap(text);
-  return lintGrammar(text).map((d) => {
+  return lintGrammar(text, lang !== undefined ? { lang } : {}).map((d) => {
     const start = map.toUtf16LineChar(d.start.offset);
     const end = map.toUtf16LineChar(d.end.offset);
     const out: EditorDiagnostic = {
@@ -133,9 +140,9 @@ export function findDefinition(text: string, line: number, character: number): E
 }
 
 /** Check a sample text against a grammar and describe the result for a notification. */
-export function checkSample(grammarText: string, sample: string): SampleCheck {
-  const result = matchSample(grammarText, sample);
-  const message = describeMatch(result, sample)
+export function checkSample(grammarText: string, sample: string, lang?: Lang): SampleCheck {
+  const result = matchSample(grammarText, sample, lang !== undefined ? { lang } : {});
+  const message = describeMatch(result, sample, lang)
     .filter((l) => !l.startsWith("  "))
     .join("\n");
   if (result.status === "accept") return { ok: true, message };
