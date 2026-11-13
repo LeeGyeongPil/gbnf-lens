@@ -139,9 +139,23 @@ export interface ParsedGrammar {
   source: string;
 }
 
+/**
+ * Language of human-readable messages. Diagnostic codes and llama.cpp's own text are never translated.
+ * Other values passed at run time (for example from plain JavaScript) never throw: a string that
+ * starts with `ko` ("ko-KR", "KO", "ko_KR.UTF-8") gives Korean, anything else ("fr", "EN") gives English.
+ */
+export type Language = "en" | "ko";
+
+export interface ParseOptions {
+  /** Language of `Diagnostic.message`. Default `"en"`; see {@link Language} for other values. */
+  lang?: Language;
+}
+
 export interface LintOptions {
   /** Also report `info` level hints. Default `true`. */
   includeInfo?: boolean;
+  /** Language of `Diagnostic.message`. Default `"en"`; see {@link Language} for other values. */
+  lang?: Language;
 }
 
 export interface MatchOptions {
@@ -151,6 +165,11 @@ export interface MatchOptions {
   maxInputChars?: number;
   /** Work budget; exceeding it gives `inconclusive`. Default 5000000. */
   maxSteps?: number;
+  /**
+   * Language of the messages in `grammar-error` diagnostics and of the `expected` names
+   * ("any character", "end of input") in a `reject`. Default `"en"`; see {@link Language} for other values.
+   */
+  lang?: Language;
 }
 
 export type MatchResult =

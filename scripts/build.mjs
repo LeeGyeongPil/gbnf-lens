@@ -48,4 +48,7 @@ await build({
 // Pure editor features, also bundled on their own so tests can load them without VS Code.
 await build({ ...common, entryPoints: ["extension/src/features.ts"], format: "esm", outfile: "extension/dist/features.mjs" });
 
+// Internal message tables, bundled only so tests can compare the en and ko tables (not published, not public API).
+await build({ ...common, entryPoints: ["src/messages.ts"], format: "esm", outfile: "extension/dist/messages.mjs" });
+
 console.log(`built gbnf-lens ${pkg.version}`);

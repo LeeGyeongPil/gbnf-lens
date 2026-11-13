@@ -1,3 +1,4 @@
+import { langFromLocale, msg, type MessageArgs, type MessageId } from "./messages.js";
 import { SourceMap, codePointsToString } from "./position.js";
 import { SymbolCounter, costRepetition } from "./repeat-cost.js";
 import {
@@ -9,6 +10,7 @@ import {
   type Diagnostic,
   type DiagnosticCode,
   type Item,
+  type ParseOptions,
   type ParsedGrammar,
   type Rule,
   type SeqNode,
@@ -40,8 +42,11 @@ const BACKSLASH = 0x5c;
  * `parse_sequence` and `parse_alternates`. Never throws for bad grammar text: syntax
  * errors come back as `diagnostics` and `ok === false`.
  */
-export function parseGrammar(src: string): ParsedGrammar {
+export function parseGrammar(src: string, options: ParseOptions = {}): ParsedGrammar {
   if (typeof src !== "string") throw new TypeError("parseGrammar: `src` must be a string containing GBNF text");
+  // 지원 밖 lang("ko-KR"·"fr"·null 옵션 등)도 예외 없이 en/ko 로 정규화한다.
+  const lang = langFromLocale(options?.lang);
+  const t = (id: MessageId, args?: MessageArgs): string => msg(lang, id, args);
 
   const map = new SourceMap(src);
   const s = map.codePoints;
@@ -55,7 +60,7 @@ export function parseGrammar(src: string): ParsedGrammar {
   /** What llama.cpp prints after "at": the rest of the grammar text. */
   const rest = (p: number): string => codePointsToString(s, p, n);
   const text = (from: number, to: number): string => codePointsToString(s, from, to);
-  const show = (c: number): string => (c < 0 ? "end of input" : `'${text(pos, pos + 1)}'`);
+  const show = (c: number): string => (c < 0 ? t("parse.endOfInputShort") : `'${text(pos, pos + 1)}'`);
 
   const diag = (
     severity: Severity,
@@ -100,7 +105,7 @@ export function parseGrammar(src: string): ParsedGrammar {
     if (q !== pos + size) {
       throw new ParseFail(
         "parse",
-        `expecting ${size} hex digits after '${text(escapeStart, escapeStart + 2)}'`,
+        t("parse.hex", { size, escape: text(escapeStart, escapeStart + 2) }),
         escapeStart,
         Math.min(q + 1, n),
         `expecting ${size} hex chars at ${rest(pos)}`,
@@ -134,7 +139,7 @@ export function parseGrammar(src: string): ParsedGrammar {
           const shown = e < 0 ? "" : text(start + 1, start + 2);
           throw new ParseFail(
             "parse",
-            `unknown escape '\\${shown}' (allowed: \\x \\u \\U \\t \\r \\n \\\\ \\" \\[ \\] \\-)`,
+            t("parse.unknownEscape", { ch: shown }),
             start,
             Math.min(start + 2, n),
             `unknown escape at ${rest(start)}`,
@@ -142,7 +147,7 @@ export function parseGrammar(src: string): ParsedGrammar {
         }
       }
     }
-    if (c < 0) throw new ParseFail("parse", "unexpected end of input", n, n, "unexpected end of input");
+    if (c < 0) throw new ParseFail("parse", t("parse.endOfInput"), n, n, "unexpected end of input");
     pos++;
     return c;
   };
@@ -159,8 +164,7 @@ export function parseGrammar(src: string): ParsedGrammar {
     if (checkU64 && BigInt(digits) > 18446744073709551615n) {
       throw new ParseFail(
         "parse",
-        `the number ${digits} is too large: repetition counts must be at most 18446744073709551615 (llama.cpp refuses this grammar; ` +
-          `anything above ${MAX_REPETITION_THRESHOLD} is already silently treated as unbounded)`,
+        t("parse.numberTooLarge", { digits, threshold: MAX_REPETITION_THRESHOLD }),
         start,
         pos,
         "stoull",
@@ -174,19 +178,19 @@ export function parseGrammar(src: string): ParsedGrammar {
     const fail = (message: string, llama: string): never => {
       throw new ParseFail("parse", message, pos, Math.min(pos + 1, n), `${llama} at ${rest(pos)}`);
     };
-    if (at(pos) !== 0x3c) fail("expecting '<' after '!'", "expecting '<'");
+    if (at(pos) !== 0x3c) fail(t("parse.tokenLt"), "expecting '<'");
     pos++;
     if (at(pos) === 0x5b) {
       pos++;
-      if (!isDigit(at(pos))) fail("expecting a token id like <[1234]>", "expecting integer");
+      if (!isDigit(at(pos))) fail(t("parse.tokenId"), "expecting integer");
       parseInt10();
-      if (at(pos) !== 0x5d) fail("expecting ']'", "expecting ']'");
+      if (at(pos) !== 0x5d) fail(t("parse.tokenBracket"), "expecting ']'");
       pos++;
-      if (at(pos) !== 0x3e) fail("expecting '>'", "expecting '>'");
+      if (at(pos) !== 0x3e) fail(t("parse.tokenGt"), "expecting '>'");
       pos++;
     } else {
       while (pos < n && at(pos) !== 0x3e) pos++;
-      if (at(pos) !== 0x3e) fail("expecting '>' to close the token", "expecting '>'");
+      if (at(pos) !== 0x3e) fail(t("parse.tokenClose"), "expecting '>'");
       pos++;
     }
     return { kind: "token", negated, text: text(start, pos), start, end: pos };
@@ -205,7 +209,7 @@ export function parseGrammar(src: string): ParsedGrammar {
       if (prev === undefined) {
         throw new ParseFail(
           "parse",
-          "expecting an item before '*', '+', '?' or '{...}' to repeat",
+          t("parse.repeatNoItem"),
           opStart,
           Math.min(opStart + 1, n),
           `expecting preceding item to */+/?/{ at ${rest(pos)}`,
@@ -215,9 +219,7 @@ export function parseGrammar(src: string): ParsedGrammar {
       if (cost.overLimit) {
         throw new ParseFail(
           "repetition-threshold",
-          `${nPrevRules} rules x ${cost.totalRules} = ${cost.product} > ${MAX_REPETITION_THRESHOLD} ` +
-            "(llama.cpp refuses this grammar). It multiplies the number of rules inside the repeated part by the " +
-            "repetition count; lower the count or simplify the repeated part.",
+          t("parse.repeatThreshold", { prev: nPrevRules, total: cost.totalRules, product: cost.product, threshold: MAX_REPETITION_THRESHOLD }),
           prev.start,
           opEnd,
           "number of rules that are going to be repeated multiplied by the new repetition exceeds sane defaults, " +
@@ -227,8 +229,7 @@ export function parseGrammar(src: string): ParsedGrammar {
       if (cost.invalidRange) {
         throw new ParseFail(
           "repetition-range",
-          `{${min},${max}}: the maximum is smaller than the minimum. llama.cpp does not check this; ` +
-            "its expansion subtracts the two as unsigned numbers and would not finish.",
+          t("parse.repeatRange", { min, max: String(max) }),
           prev.start,
           opEnd,
           "",
@@ -240,8 +241,7 @@ export function parseGrammar(src: string): ParsedGrammar {
           diag(
             "warning",
             "max-clamped",
-            `${label}: llama.cpp silently treats max > ${MAX_REPETITION_THRESHOLD} as unbounded ({${min},}); ` +
-              "the upper limit you wrote is not enforced.",
+            t("parse.maxClamped", { label, min, threshold: MAX_REPETITION_THRESHOLD }),
             prev.start,
             opEnd,
           ),
@@ -251,8 +251,7 @@ export function parseGrammar(src: string): ParsedGrammar {
           diag(
             "info",
             "large-repetition",
-            `this repetition makes llama.cpp build about ${cost.product} rules (limit ${MAX_REPETITION_THRESHOLD}); ` +
-              "grammar loading and sampling can get slow.",
+            t("parse.largeRepetition", { product: cost.product, threshold: MAX_REPETITION_THRESHOLD }),
             prev.start,
             opEnd,
           ),
@@ -273,7 +272,7 @@ export function parseGrammar(src: string): ParsedGrammar {
           if (pos >= n) {
             throw new ParseFail(
               "parse",
-              "unexpected end of input: this string literal is never closed (missing '\"')",
+              t("parse.stringUnclosed"),
               start,
               n,
               "unexpected end of input",
@@ -298,7 +297,7 @@ export function parseGrammar(src: string): ParsedGrammar {
           if (pos >= n) {
             throw new ParseFail(
               "parse",
-              "unexpected end of input: this character class is never closed (missing ']')",
+              t("parse.classUnclosed"),
               start,
               n,
               "unexpected end of input",
@@ -307,7 +306,7 @@ export function parseGrammar(src: string): ParsedGrammar {
           const from = char();
           let to = from;
           if (at(pos) === 0x2d && at(pos + 1) !== 0x5d) {
-            if (pos + 1 >= n) throw new ParseFail("parse", "unexpected end of input after '-' in a character class", pos, n, "unexpected end of input");
+            if (pos + 1 >= n) throw new ParseFail("parse", t("parse.classDash"), pos, n, "unexpected end of input");
             pos++;
             to = char();
           }
@@ -337,8 +336,7 @@ export function parseGrammar(src: string): ParsedGrammar {
         if (depth >= GRAMMAR_RECURSIVE_LIMIT) {
           throw new ParseFail(
             "nesting-depth",
-            `parentheses are nested more than ${GRAMMAR_RECURSIVE_LIMIT} levels deep (llama.cpp refuses this). ` +
-              "Move the inner part into its own rule.",
+            t("parse.nestingDepth", { limit: GRAMMAR_RECURSIVE_LIMIT }),
             start,
             start + 1,
             `grammar recursion depth limit exceeded (max ${GRAMMAR_RECURSIVE_LIMIT}), please reduce nesting depth`,
@@ -352,7 +350,7 @@ export function parseGrammar(src: string): ParsedGrammar {
         if (at(pos) !== 0x29) {
           throw new ParseFail(
             "parse",
-            `expecting ')' to close the '(' opened at ${map.position(start).line}:${map.position(start).column}`,
+            t("parse.parenClose", { line: map.position(start).line, column: map.position(start).column }),
             start,
             start + 1,
             `expecting ')' at ${rest(pos)}`,
@@ -376,7 +374,7 @@ export function parseGrammar(src: string): ParsedGrammar {
       } else if (c === 0x7b) {
         pos = space(pos + 1, nested);
         if (!isDigit(at(pos))) {
-          throw new ParseFail("parse", "expecting a number after '{', like {2} or {1,3}", pos, Math.min(pos + 1, n), `expecting an int at ${rest(pos)}`);
+          throw new ParseFail("parse", t("parse.braceNumber"), pos, Math.min(pos + 1, n), `expecting an int at ${rest(pos)}`);
         }
         const min = parseInt10(true);
         pos = space(pos, nested);
@@ -393,18 +391,18 @@ export function parseGrammar(src: string): ParsedGrammar {
             pos = space(pos, nested);
           }
           if (at(pos) !== 0x7d) {
-            throw new ParseFail("parse", "expecting '}' to close the repetition", pos, Math.min(pos + 1, n), `expecting '}' at ${rest(pos)}`);
+            throw new ParseFail("parse", t("parse.braceClose"), pos, Math.min(pos + 1, n), `expecting '}' at ${rest(pos)}`);
           }
           opEnd = pos + 1;
           pos = space(pos + 1, nested);
         } else {
-          throw new ParseFail("parse", "expecting ',' or '}' after the number", pos, Math.min(pos + 1, n), `expecting ',' at ${rest(pos)}`);
+          throw new ParseFail("parse", t("parse.braceComma"), pos, Math.min(pos + 1, n), `expecting ',' at ${rest(pos)}`);
         }
         if (min > MAX_REPETITION_THRESHOLD) {
           const prev = items[items.length - 1];
           throw new ParseFail(
             "repetition-min-too-large",
-            `{${min}...}: the minimum is above ${MAX_REPETITION_THRESHOLD} (llama.cpp refuses this grammar).`,
+            t("parse.minTooLarge", { min, threshold: MAX_REPETITION_THRESHOLD }),
             prev ? prev.start : start,
             opEnd,
             "number of repetitions exceeds sane defaults, please reduce the number of repetitions",
@@ -440,16 +438,16 @@ export function parseGrammar(src: string): ParsedGrammar {
       if (pos === nameStart) {
         const hint =
           at(pos) === 0x7c
-            ? "a line cannot start with '|'; put '|' at the end of the previous line or wrap the alternatives in ( )"
-            : "rule names use letters, digits and '-'";
-        throw new ParseFail("parse", `expecting name — ${hint}`, pos, Math.min(pos + 1, n), `expecting name at ${rest(pos)}`);
+            ? t("parse.hintLeadingPipe")
+            : t("parse.hintNameChars");
+        throw new ParseFail("parse", t("parse.expectName", { hint }), pos, Math.min(pos + 1, n), `expecting name at ${rest(pos)}`);
       }
       const nameEnd = pos;
       const name = text(nameStart, nameEnd);
       pos = space(pos, false);
       counter.seen(name);
       if (!(at(pos) === 0x3a && at(pos + 1) === 0x3a && at(pos + 2) === 0x3d)) {
-        throw new ParseFail("parse", `expecting '::=' after the rule name '${name}'`, pos, Math.min(pos + 1, n), `expecting ::= at ${rest(pos)}`);
+        throw new ParseFail("parse", t("parse.expectAssign", { name }), pos, Math.min(pos + 1, n), `expecting ::= at ${rest(pos)}`);
       }
       pos = space(pos + 3, true);
       const body = alternates(false, 0);
@@ -459,10 +457,10 @@ export function parseGrammar(src: string): ParsedGrammar {
       else if (pos < n) {
         const c = at(pos);
         let hint: string;
-        if (c === 0x5f) hint = "rule names may only contain letters, digits and '-'; '_' is not allowed";
-        else if (c === 0x29) hint = "this ')' has no matching '('";
-        else hint = `unexpected ${show(c)}; a rule must end at the end of its line`;
-        throw new ParseFail("parse", `expecting newline or end — ${hint}`, pos, Math.min(pos + 1, n), `expecting newline or end at ${rest(pos)}`);
+        if (c === 0x5f) hint = t("parse.hintUnderscore");
+        else if (c === 0x29) hint = t("parse.hintCloseParen");
+        else hint = t("parse.hintUnexpected", { what: show(c) });
+        throw new ParseFail("parse", t("parse.expectNewline", { hint }), pos, Math.min(pos + 1, n), `expecting newline or end at ${rest(pos)}`);
       }
       pos = space(pos, true);
 
@@ -474,7 +472,7 @@ export function parseGrammar(src: string): ParsedGrammar {
           diag(
             "warning",
             "duplicate-rule",
-            `rule '${name}' is defined again (first at ${where.line}:${where.column}); llama.cpp silently keeps the last definition`,
+            t("parse.duplicateRule", { name, line: where.line, column: where.column }),
             nameStart,
             nameEnd,
             { rule: name },

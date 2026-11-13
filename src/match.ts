@@ -1,4 +1,5 @@
 import { analyzeGrammar, effectiveRules } from "./analyze.js";
+import { langFromLocale, msg } from "./messages.js";
 import { parseGrammar } from "./parse.js";
 import { SourceMap, toCodePoints } from "./position.js";
 import type { AltNode, Diagnostic, Item, MatchOptions, MatchResult, ParsedGrammar, SeqNode } from "./types.js";
@@ -33,12 +34,14 @@ export function matchSample(grammar: string | ParsedGrammar, input: string, opti
   if (!Number.isFinite(maxSteps) || maxSteps < 1) throw new TypeError("matchSample: `maxSteps` must be a positive number");
   if (!Number.isFinite(maxInputChars) || maxInputChars < 0) throw new TypeError("matchSample: `maxInputChars` must be a non-negative number");
 
-  const parsed = typeof grammar === "string" ? parseGrammar(grammar) : grammar;
-  const errors: Diagnostic[] = [...parsed.diagnostics, ...(parsed.ok ? analyzeGrammar(parsed) : [])].filter((d) => d.severity === "error" && !(d.code === "no-root" && options.root !== undefined));
+  // 메시지 언어: "ko…" 면 한국어, 그 밖(없음·"fr"·"EN" 등)은 영어. 지원 밖 값도 예외 없이 정규화한다.
+  const lang = langFromLocale(options.lang);
+  const parsed = typeof grammar === "string" ? parseGrammar(grammar, { lang }) : grammar;
+  const errors: Diagnostic[] = [...parsed.diagnostics, ...(parsed.ok ? analyzeGrammar(parsed, { lang }) : [])].filter((d) => d.severity === "error" && !(d.code === "no-root" && options.root !== undefined));
   const byName = effectiveRules(parsed.rules);
   if (errors.length === 0 && !byName.has(rootName)) {
     const zero = { offset: 0, line: 1, column: 1 };
-    errors.push({ severity: "error", code: "no-root", message: `the grammar has no rule named '${rootName}'`, start: zero, end: zero });
+    errors.push({ severity: "error", code: "no-root", message: msg(lang, "analyze.noRootNamed", { name: rootName }), start: zero, end: zero });
   }
   if (errors.length > 0) return { status: "grammar-error", diagnostics: errors };
 
@@ -104,7 +107,7 @@ export function matchSample(grammar: string | ParsedGrammar, input: string, opti
       }
       case "any":
         if (pos < cps.length) return new Set([pos + 1]);
-        note(pos, "any character");
+        note(pos, msg(lang, "match.anyChar"));
         return EMPTY;
       case "token":
         needsVocab = true;
@@ -172,6 +175,6 @@ export function matchSample(grammar: string | ParsedGrammar, input: string, opti
     status: "reject",
     reason: furthest >= cps.length ? "unexpected-end" : "unexpected-char",
     at,
-    expected: shown.length > 0 ? shown : ["end of input"],
+    expected: shown.length > 0 ? shown : [msg(lang, "sample.endOfInputName")],
   };
 }

@@ -1,3 +1,4 @@
+import { msg, type Lang } from "./messages.js";
 import { SourceMap, codePointsToString } from "./position.js";
 import type { Diagnostic, MatchResult, Position } from "./types.js";
 
@@ -41,45 +42,46 @@ export function snippet(map: SourceMap, start: Position, end?: Position): string
 }
 
 /** Text form of a diagnostic: `file:line:col severity code message` and a caret snippet. */
-export function formatDiagnostic(file: string, d: Diagnostic, map: SourceMap): string {
+export function formatDiagnostic(file: string, d: Diagnostic, map: SourceMap, lang?: Lang): string {
   const head = `${file}:${d.start.line}:${d.start.column} ${d.severity} ${d.code}: ${d.message}`;
   const lines = [head, ...snippet(map, d.start, d.end)];
-  if (d.llamaMessage) lines.push(`  llama.cpp says: ${d.llamaMessage.split("\n")[0]}`);
+  if (d.llamaMessage) lines.push(`  ${msg(lang, "format.llamaSays", { text: d.llamaMessage.split("\n")[0] as string })}`);
   return lines.join("\n");
 }
 
-function showChar(input: string, offset: number): string {
+function showChar(input: string, offset: number, lang?: Lang): string {
   const cps = [...input];
   const ch = cps[offset];
-  if (ch === undefined) return "end of input";
+  if (ch === undefined) return msg(lang, "sample.endOfInputName");
   return `'${JSON.stringify(ch).slice(1, -1)}'`;
 }
 
 /** Plain-language result of a sample check, with a caret line where the sample went wrong. */
-export function describeMatch(result: MatchResult, input: string): string[] {
+export function describeMatch(result: MatchResult, input: string, lang?: Lang): string[] {
   switch (result.status) {
     case "accept":
-      return ["sample accepted"];
+      return [msg(lang, "sample.accepted")];
     case "reject": {
       const { at, expected } = result;
-      const what = result.reason === "unexpected-end" ? "unexpected end of input" : `unexpected ${showChar(input, at.offset)}`;
-      const exp = expected.length === 1 ? `expected ${expected[0]}` : `expected one of ${expected.join(", ")}`;
+      const what =
+        result.reason === "unexpected-end" ? msg(lang, "sample.endOfInput") : msg(lang, "sample.unexpectedChar", { ch: showChar(input, at.offset, lang) });
+      const exp = expected.length === 1 ? msg(lang, "sample.expectedOne", { item: expected[0] as string }) : msg(lang, "sample.expectedMany", { items: expected.join(", ") });
       const map = new SourceMap(input);
-      return [`sample rejected at ${at.line}:${at.column} (offset ${at.offset}): ${what}, ${exp}`, ...snippet(map, at)];
+      return [msg(lang, "sample.rejected", { line: at.line, column: at.column, offset: at.offset, what, expected: exp }), ...snippet(map, at)];
     }
     case "inconclusive":
       switch (result.reason) {
         case "needs-vocab":
-          return ["sample inconclusive: needs vocab (the grammar uses <token> terminals, which depend on the model's vocabulary)"];
+          return [msg(lang, "sample.needsVocab")];
         case "input-too-long":
-          return [`sample inconclusive: the sample is longer than ${result.limit ?? "the"} characters (code points); raise --max-input to check it anyway`];
+          return [msg(lang, "sample.tooLong", { limit: result.limit ?? "the" })];
         case "stack-depth":
-          return ["sample inconclusive: the grammar recurses too deeply on this sample (deep right recursion); --max-steps will not help, try a shorter sample or a loop (x*) instead of recursion"];
+          return [msg(lang, "sample.stackDepth")];
         default:
-          return ["sample inconclusive: work budget exceeded (the grammar is very ambiguous for this sample); raise --max-steps to try again"];
+          return [msg(lang, "sample.budget")];
       }
     case "grammar-error":
-      return ["sample not checked: the grammar has errors"];
+      return [msg(lang, "sample.grammarError")];
   }
 }
 

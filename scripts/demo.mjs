@@ -10,7 +10,7 @@ const cli = join(root, "dist", "cli.js");
 function step(title, ...args) {
   console.log(`\n=== ${title}`);
   console.log(`$ gbnf-lens ${args.join(" ")}`);
-  const r = spawnSync(process.execPath, [cli, ...args], { cwd: root, encoding: "utf8", timeout: 20000 });
+  const r = spawnSync(process.execPath, [cli, ...args], { cwd: root, encoding: "utf8", timeout: 20000, env: { ...process.env, GBNF_LENS_LANG: process.env.GBNF_LENS_LANG ?? "en" } });
   process.stdout.write(r.stdout);
   process.stderr.write(r.stderr);
   console.log(`(exit code ${r.status})`);

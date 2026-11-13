@@ -1,3 +1,4 @@
+import { msg, type MessageArgs, type MessageId } from "./messages.js";
 import { SourceMap } from "./position.js";
 import type { AltNode, Diagnostic, DiagnosticCode, Item, LintOptions, ParsedGrammar, RefNode, Rule, Severity, TokenNode, RepeatNode, SeqNode } from "./types.js";
 
@@ -106,6 +107,7 @@ const OPTIONAL_CHAIN_LENGTH = 3;
  */
 export function analyzeGrammar(grammar: ParsedGrammar, options: LintOptions = {}): Diagnostic[] {
   const map = new SourceMap(grammar.source);
+  const t = (id: MessageId, args?: MessageArgs): string => msg(options.lang, id, args);
   const out: Diagnostic[] = [];
   const add = (
     severity: Severity,
@@ -134,7 +136,7 @@ export function analyzeGrammar(grammar: ParsedGrammar, options: LintOptions = {}
     refsOf.set(rule.name, refs);
     for (const ref of refs) {
       if (!byName.has(ref.name)) {
-        add("error", "undefined-rule", `rule '${ref.name}' is used here but never defined`, ref.start, ref.end, {
+        add("error", "undefined-rule", t("analyze.undefinedRule", { name: ref.name }), ref.start, ref.end, {
           rule: rule.name,
           llamaMessage: `Undefined rule identifier '${ref.name}'`,
         });
@@ -145,7 +147,7 @@ export function analyzeGrammar(grammar: ParsedGrammar, options: LintOptions = {}
   // 2. llama.cpp starts from a rule called `root`.
   const hasRoot = byName.has("root");
   if (!hasRoot) {
-    add("error", "no-root", "the grammar has no 'root' rule; llama.cpp always starts matching at a rule named 'root'", 0, 1, {
+    add("error", "no-root", t("analyze.noRoot"), 0, 1, {
       llamaMessage: "grammar does not contain a 'root' symbol",
     });
   }
@@ -162,7 +164,7 @@ export function analyzeGrammar(grammar: ParsedGrammar, options: LintOptions = {}
     }
     for (const rule of byName.values()) {
       if (!seen.has(rule.name)) {
-        add("warning", "unused-rule", `rule '${rule.name}' is never reached from 'root'`, rule.nameStart, rule.nameEnd, { rule: rule.name });
+        add("warning", "unused-rule", t("analyze.unusedRule", { name: rule.name }), rule.nameStart, rule.nameEnd, { rule: rule.name });
       }
     }
   }
@@ -175,8 +177,7 @@ export function analyzeGrammar(grammar: ParsedGrammar, options: LintOptions = {}
         add(
           "warning",
           "nullable-loop",
-          "the repeated part can match the empty string, so this loop can go around without consuming input; " +
-            "the grammar becomes ambiguous and can blow up llama.cpp's parser stacks. Make the inner part non-empty.",
+          t("analyze.nullableLoop"),
           item.start,
           item.end,
           { rule: rule.name },
@@ -191,7 +192,7 @@ export function analyzeGrammar(grammar: ParsedGrammar, options: LintOptions = {}
     add(
       "info",
       "token-needs-vocab",
-      `${item.text} is a token terminal: it needs the model vocabulary, so gbnf-lens cannot match it in sample checks`,
+      t("analyze.tokenNeedsVocab", { text: item.text }),
       item.start,
       item.end,
     );
@@ -209,7 +210,7 @@ export function analyzeGrammar(grammar: ParsedGrammar, options: LintOptions = {}
         add(
           "warning",
           "optional-chain",
-          `${OPTIONAL_CHAIN_LENGTH} or more identical optional items in a row ('x? x? x?'): llama.cpp can become very slow here. Use a bounded repeat such as x{0,N} instead.`,
+          t("analyze.optionalChain", { count: OPTIONAL_CHAIN_LENGTH }),
           b.start,
           b.end,
           { rule: ruleName },
@@ -239,8 +240,7 @@ export function analyzeGrammar(grammar: ParsedGrammar, options: LintOptions = {}
       add(
         "error",
         "left-recursion",
-        `left recursion: ${chain}. llama.cpp refuses grammars where a rule can begin with itself; ` +
-          `rewrite it as a loop, e.g. expr ::= term ("+" term)*.`,
+        t("analyze.leftRecursion", { chain }),
         rule.nameStart,
         rule.nameEnd,
         { rule: name },
