@@ -66,3 +66,43 @@ test("exit codes and --json schema", () => {
   assert.ok(parsed.some((d) => d.code === "undefined-rule" && d.file.endsWith("undefined.gbnf") && d.line === 1 && d.column === 23));
   assert.deepEqual(JSON.parse(run("check", "fixtures/grammars/json.gbnf", "--json").stdout), []);
 });
+
+const runStdin = (input, ...args) =>
+  spawnSync(process.execPath, [cliPath, ...args], { cwd: root, encoding: "utf8", timeout: 20000, env: cleanEnv(), input });
+
+test("check - reads the grammar from standard input", () => {
+  const ok = runStdin('root ::= "a"\n', "check", "-");
+  assert.equal(ok.status, 0, ok.stderr);
+  assert.match(ok.stdout, /<stdin>: ok/);
+
+  const bom = runStdin('﻿root ::= "a"\n', "check", "-", "--sample-text", "a");
+  assert.equal(bom.status, 0, bom.stdout);
+  assert.match(bom.stdout, /sample accepted/);
+
+  const bad = runStdin("root ::= undefined-rule\n", "check", "-");
+  assert.equal(bad.status, 1);
+  assert.match(bad.stdout, /^<stdin>:1:/);
+
+  const json = JSON.parse(runStdin("root ::= undefined-rule\n", "check", "-", "--json").stdout);
+  assert.ok(json.length > 0 && json.every((d) => d.file === "<stdin>"));
+
+  const rejected = runStdin('root ::= "a"\n', "check", "-", "--sample-text", "b");
+  assert.equal(rejected.status, 1);
+});
+
+test("check - misuse of standard input is a usage error", () => {
+  const twice = runStdin('root ::= "a"\n', "check", "-", "-");
+  assert.equal(twice.status, 2);
+  assert.match(twice.stderr, /only once/);
+  const ko = runStdin('root ::= "a"\n', "--lang", "ko", "check", "-", "-");
+  assert.match(ko.stderr, /한 번만/);
+  const both = runStdin('root ::= "a"\n', "check", "-", "--sample", "-");
+  assert.equal(both.status, 2);
+  assert.match(both.stderr, /both the grammar and the sample/);
+});
+
+test("./- is still a file path", () => {
+  const r = runStdin('root ::= "a"\n', "check", "./-");
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /cannot read '\.\/-'/);
+});
