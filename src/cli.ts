@@ -9,6 +9,9 @@ import type { MatchResult } from "./types.js";
 declare const __VERSION__: string;
 const VERSION = typeof __VERSION__ === "string" ? __VERSION__ : "0.0.0";
 
+const STDIN_ARG = "-";
+const STDIN_NAME = "<stdin>";
+
 interface Args {
   files: string[];
   sampleFile?: string;
@@ -106,6 +109,9 @@ function parseArgs(argv0: string[], base: Lang): Args | "help" | "version" {
   }
   if (args.files.length === 0) throw new UsageError("cli.noFiles");
   if (args.sampleFile !== undefined && args.sampleText !== undefined) throw new UsageError("cli.sampleBoth");
+  // Standard input can be read only once: '-' twice, or '-' as grammar together with `--sample -`, is a usage error.
+  if (args.files.filter((f) => f === STDIN_ARG).length > 1) throw new UsageError("cli.stdinTwice");
+  if (args.files.includes(STDIN_ARG) && args.sampleFile === STDIN_ARG) throw new UsageError("cli.stdinSample");
   return args;
 }
 
@@ -173,10 +179,12 @@ export function main(argv: string[], out: (s: string) => void, err: (s: string) 
   let warnings = 0;
   const json: JsonDiagnostic[] = [];
 
-  for (const file of args.files) {
+  for (const arg of args.files) {
+    // '-' means standard input; diagnostics call it <stdin>. './-' is still a real file.
+    const file = arg === STDIN_ARG ? STDIN_NAME : arg;
     let text: string;
     try {
-      text = readFileSync(file, "utf8");
+      text = readFileSync(arg === STDIN_ARG ? 0 : arg, "utf8");
     } catch (e) {
       err(`gbnf-lens: ${t("cli.cannotRead", { file, reason: (e as Error).message })}\n`);
       readFailed = true;
