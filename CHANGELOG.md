@@ -5,6 +5,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-23
+
+### Added
+- `gbnf-lens check -` reads the grammar from standard input; diagnostics and `--json` use the file name `<stdin>`.
+  Giving `-` twice, or `-` together with `--sample -`, is a usage error (exit code 2). Use `./-` for a real file named `-`.
+
 ## [0.2.0] - 2026-11-13
 
 ### Added
@@ -55,7 +61,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - `matchSample` reports why a sample is `inconclusive`: `budget` (`--max-steps`), `input-too-long` (`--max-input`, default 100000 code points), `stack-depth` or `needs-vocab`, each with its own message.
 - A repeat count above 2^64-1 is a parse error; an unclosed parenthesis is reported at the opening `(` with `line:column`.
 
-[Unreleased]: https://github.com/LeeGyeongPil/gbnf-lens/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/LeeGyeongPil/gbnf-lens/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/LeeGyeongPil/gbnf-lens/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/LeeGyeongPil/gbnf-lens/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/LeeGyeongPil/gbnf-lens/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/LeeGyeongPil/gbnf-lens/compare/v0.1.0...v0.1.1
