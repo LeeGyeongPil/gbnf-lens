@@ -64,6 +64,8 @@ npm run demo
 node dist/cli.js check <files...> [--sample <file>] [--sample-text <text>] [--json] [--strict] [--max-steps <n>] [--max-input <n>] [--lang en|ko]
 ```
 
+Use `-` as the file to read the grammar from standard input (diagnostics call it `<stdin>`): `cat grammar.gbnf | node dist/cli.js check -`. `-` can be given once; use `./-` for a real file named `-`.
+
 **Language.** Messages, help and the summary line come in English or Korean. The order is `--lang en|ko`, then the `GBNF_LENS_LANG` variable, then `LC_ALL`, `LC_MESSAGES` and `LANG`; a value that starts with `ko` gives Korean and anything else gives English. `--lang` can come before `check` (`--lang ko check ...`, `--lang=ko check ...`) or after it. A missing value, or one that is not `en` or `ko`, is a usage error (exit code 2) in either place, and the message names the `--lang` value (for example `--lang check x` gives `--lang needs 'en' or 'ko', got 'check'`). `code`, `severity` and the JSON keys never change, and the text after `llama.cpp says:` is llama.cpp's own and stays as it is. `--json` `message` follows the chosen language.
 
 ```bash

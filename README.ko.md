@@ -64,6 +64,8 @@ npm run demo
 node dist/cli.js check <files...> [--sample <file>] [--sample-text <text>] [--json] [--strict] [--max-steps <n>] [--max-input <n>] [--lang en|ko]
 ```
 
+파일 자리에 `-` 를 쓰면 표준 입력에서 문법을 읽습니다(진단에는 `<stdin>` 으로 표시): `cat grammar.gbnf | node dist/cli.js check -`. `-` 는 한 번만 쓸 수 있고, 이름이 `-` 인 실제 파일은 `./-` 로 주세요.
+
 **언어.** 메시지, 도움말, 요약 줄을 영어 또는 한국어로 볼 수 있습니다. 순서는 `--lang en|ko`, 그다음 `GBNF_LENS_LANG` 환경 변수, 그다음 `LC_ALL`, `LC_MESSAGES`, `LANG` 이며, 값이 `ko` 로 시작하면 한국어, 그 밖에는 영어입니다. `--lang` 은 `check` 앞에 와도 되고(`--lang ko check ...`, `--lang=ko check ...`) 뒤에 와도 됩니다. 값이 없거나 `en`·`ko` 가 아니면 어느 자리든 사용법 오류(종료 코드 2)이고, 오류 문구가 `--lang` 값을 가리킵니다. 이 오류 문구의 언어는 `GBNF_LENS_LANG`·`LANG` 을 따르므로, 한국어 환경(예: `LANG=ko_KR.UTF-8`)에서 `--lang check x` 는 `--lang 에는 'en' 또는 'ko' 가 필요합니다 (받은 값: 'check')` 를 출력합니다(영어 환경에서는 `--lang needs 'en' or 'ko', got 'check'`). `code`, `severity`, JSON 키는 바뀌지 않고, `llama.cpp says:` 뒤의 글은 llama.cpp 원문 그대로입니다. `--json` 의 `message` 는 고른 언어를 따릅니다.
 
 ```bash
