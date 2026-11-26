@@ -67,7 +67,13 @@ export function describeMatch(result: MatchResult, input: string, lang?: Lang): 
         result.reason === "unexpected-end" ? msg(lang, "sample.endOfInput") : msg(lang, "sample.unexpectedChar", { ch: showChar(input, at.offset, lang) });
       const exp = expected.length === 1 ? msg(lang, "sample.expectedOne", { item: expected[0] as string }) : msg(lang, "sample.expectedMany", { items: expected.join(", ") });
       const map = new SourceMap(input);
-      return [msg(lang, "sample.rejected", { line: at.line, column: at.column, offset: at.offset, what, expected: exp }), ...snippet(map, at)];
+      let first = msg(lang, "sample.rejected", { line: at.line, column: at.column, offset: at.offset, what, expected: exp });
+      // Only a final "\n" rejected where the grammar wants the end of input gets the hint.
+      const cps = [...input];
+      if (result.reason !== "unexpected-end" && at.offset === cps.length - 1 && cps[at.offset] === "\n" && expected.length === 1 && expected[0] === msg(lang, "sample.endOfInputName")) {
+        first += ` ${msg(lang, "sample.trailingNewlineHint")}`;
+      }
+      return [first, ...snippet(map, at)];
     }
     case "inconclusive":
       switch (result.reason) {

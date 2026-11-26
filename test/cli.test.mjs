@@ -106,3 +106,29 @@ test("./- is still a file path", () => {
   assert.equal(r.status, 2);
   assert.match(r.stderr, /cannot read '\.\/-'/);
 });
+
+test("trailing newline rejection adds a hint; other rejections do not", async () => {
+  const { mkdtempSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const d = mkdtempSync(join(tmpdir(), "gl-nl-"));
+  const g = join(d, "yn.gbnf");
+  writeFileSync(g, 'root ::= "yes" | "no"\n');
+  const sample = (name, text) => { const f = join(d, name); writeFileSync(f, text); return f; };
+  const nl = sample("a.txt", "yes\n");
+  for (const lang of ["en", "ko"]) {
+    const r = run("check", g, "--sample", nl, "--lang", lang);
+    assert.equal(r.status, 1);
+    assert.match(r.stdout + r.stderr, lang === "en" ? /Hint: the trailing newline/ : /힌트: 파일 끝의 줄바꿈/);
+  }
+  const j = run("check", g, "--sample", nl, "--lang", "en", "--json");
+  assert.equal(j.status, 1);
+  assert.match(j.stdout, /Hint: the trailing newline/);
+  assert.match(j.stdout, /sample-rejected/);
+  for (const t of ["yex", "yes"]) {
+    const r = run("check", g, "--sample", sample("b.txt", t), "--lang", "en");
+    assert.doesNotMatch(r.stdout + r.stderr, /Hint: the trailing newline/);
+  }
+  const r2 = run("check", g, "--sample", sample("c.txt", "yes\r\n"), "--lang", "en");
+  assert.doesNotMatch(r2.stdout + r2.stderr, /Hint: the trailing newline/);
+});
