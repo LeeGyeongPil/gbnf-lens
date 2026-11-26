@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-26
+
+### Changed
+- A sample rejected only because of its final newline now gets a one-line hint (human output and `--json` `message`); verdict, exit code and `code` are unchanged.
+
 ## [0.3.0] - 2026-11-23
 
 ### Added
@@ -61,7 +66,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - `matchSample` reports why a sample is `inconclusive`: `budget` (`--max-steps`), `input-too-long` (`--max-input`, default 100000 code points), `stack-depth` or `needs-vocab`, each with its own message.
 - A repeat count above 2^64-1 is a parse error; an unclosed parenthesis is reported at the opening `(` with `line:column`.
 
-[Unreleased]: https://github.com/LeeGyeongPil/gbnf-lens/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/LeeGyeongPil/gbnf-lens/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/LeeGyeongPil/gbnf-lens/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/LeeGyeongPil/gbnf-lens/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/LeeGyeongPil/gbnf-lens/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/LeeGyeongPil/gbnf-lens/compare/v0.1.1...v0.1.2
